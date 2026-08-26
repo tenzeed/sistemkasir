@@ -83,9 +83,9 @@ export function IconTile({ icon: Icon, tone = 'warung', size = 10 }) {
 
 export function Card({ children, className = '', noPad = false, accent }) {
   return (
-    <div className={cx('relative bg-white rounded-2xl border border-ink-100 shadow-card overflow-hidden', className)}>
+    <div className={cx('relative min-w-0 bg-white rounded-2xl border border-ink-100 shadow-card overflow-hidden', className)}>
       {accent && <div className={cx('absolute inset-x-0 top-0 h-1', TONES[accent]?.tile || TONES.warung.tile)} />}
-      <div className={noPad ? '' : 'p-5'}>{children}</div>
+      <div className={noPad ? '' : 'p-4 sm:p-5'}>{children}</div>
     </div>
   );
 }
@@ -169,20 +169,34 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, message, tone =
   );
 }
 
+function withWrapHints(text) {
+  // Break only after the thousand-separator dots (never mid-digit-group) if
+  // the value ever needs to wrap onto a second line on narrow screens.
+  const parts = String(text).split('.');
+  return parts.map((part, i) => (
+    <span key={i}>
+      {part}
+      {i < parts.length - 1 ? <>.<wbr /></> : null}
+    </span>
+  ));
+}
+
 export function StatCard({ icon: Icon, label, value, sub, tone = 'warung', trend }) {
   return (
-    <Card className="relative">
-      <div className="flex items-start justify-between">
+    <Card className="relative min-w-0">
+      <div className="flex items-start justify-between gap-2">
         <IconTile icon={Icon} tone={tone} size={9} />
         {trend != null && (
-          <span className={cx('flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full', trend >= 0 ? 'text-warung-700 bg-warung-50' : 'text-chili-600 bg-chili-50')}>
+          <span className={cx('flex-shrink-0 flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full', trend >= 0 ? 'text-warung-700 bg-warung-50' : 'text-chili-600 bg-chili-50')}>
             {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}%
           </span>
         )}
       </div>
-      <p className="text-xs font-bold text-ink-400 uppercase tracking-wide mt-3.5">{label}</p>
-      <p className="text-2xl font-extrabold text-ink-900 mt-1 font-mono tracking-tight">{value}</p>
-      {sub && <p className="text-xs text-ink-400 mt-1.5">{sub}</p>}
+      <p className="text-xs font-bold text-ink-400 uppercase tracking-wide mt-3.5 line-clamp-2">{label}</p>
+      <p className="text-base sm:text-xl lg:text-2xl font-extrabold text-ink-900 mt-1 font-mono tracking-tight leading-tight break-words">
+        {typeof value === 'string' ? withWrapHints(value) : value}
+      </p>
+      {sub && <p className="text-xs text-ink-400 mt-1.5 truncate">{sub}</p>}
     </Card>
   );
 }
