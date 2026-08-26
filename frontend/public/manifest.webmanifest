@@ -1,0 +1,12 @@
+{
+  "name": "Warung Manager",
+  "short_name": "Warung",
+  "description": "Aplikasi manajemen warung — stok, EXP/FEFO, transaksi, keuangan, dan laporan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7f6",
+  "theme_color": "#0f6b4c",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

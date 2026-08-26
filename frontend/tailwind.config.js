@@ -1,0 +1,77 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+      },
+      colors: {
+        warung: {
+          50: '#eef8f3',
+          100: '#d7efe1',
+          200: '#b0dfc4',
+          300: '#7dc9a2',
+          400: '#4bab7e',
+          500: '#2e8f64',
+          600: '#1f7350',
+          700: '#0f6b4c',
+          800: '#0c4a35',
+          900: '#0a3b2b',
+          950: '#052018',
+        },
+        marigold: {
+          50: '#fef8ec',
+          100: '#fcecc7',
+          200: '#f9d78c',
+          300: '#f6be51',
+          400: '#f2a93b',
+          500: '#e88f1f',
+          600: '#c96e15',
+          700: '#a34f14',
+          800: '#853e17',
+          900: '#6f3417',
+        },
+        chili: {
+          50: '#fdf2f1',
+          100: '#fbe1de',
+          200: '#f8c7c1',
+          300: '#f0a196',
+          400: '#e4715f',
+          500: '#d24f3a',
+          600: '#c1432e',
+          700: '#9f3324',
+          800: '#832c22',
+          900: '#6e2921',
+        },
+        ink: {
+          50: '#f5f7f6',
+          100: '#e7ebe8',
+          200: '#cdd6d1',
+          300: '#a6b5ac',
+          400: '#788c80',
+          500: '#5c7166',
+          600: '#485a50',
+          700: '#3c4a42',
+          800: '#293630',
+          900: '#1a2420',
+          950: '#0e1512',
+        },
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(15,60,44,0.04), 0 8px 24px -12px rgba(15,60,44,0.12)',
+        pop: '0 12px 32px -8px rgba(15,60,44,0.28)',
+        glow: '0 0 0 4px rgba(46,143,100,0.14)',
+      },
+      backgroundImage: {
+        'warung-hero': 'radial-gradient(120% 120% at 100% 0%, #0f6b4c 0%, #0a3b2b 55%, #052018 100%)',
+        'grain': "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E\")",
+      },
+      borderRadius: {
+        xl2: '1.25rem',
+      },
+    },
+  },
+  plugins: [],
+};
