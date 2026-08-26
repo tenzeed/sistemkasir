@@ -19,6 +19,7 @@ function ExpenseModal({ open, onClose, editing }) {
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function submit() {
+    if (saving) return;
     if (!form.amount || Number(form.amount) <= 0) { pushToast('Nominal pengeluaran harus diisi', 'error'); return; }
     const payload = { date: form.date, category: form.category, amount: Number(form.amount), description: form.description };
     setSaving(true);
@@ -31,7 +32,7 @@ function ExpenseModal({ open, onClose, editing }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={editing ? 'Edit Pengeluaran' : 'Catat Pengeluaran'} footer={<><Btn variant="secondary" onClick={onClose}>Batal</Btn><Btn onClick={submit} icon={Save} disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan'}</Btn></>}>
+    <Modal open={open} onClose={onClose} title={editing ? 'Edit Pengeluaran' : 'Catat Pengeluaran'} footer={<><Btn variant="secondary" onClick={onClose} disabled={saving}>Batal</Btn><Btn onClick={submit} icon={Save} loading={saving} loadingText="Menyimpan...">Simpan</Btn></>}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Tanggal"><input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} className={inputCls} /></Field>
@@ -56,6 +57,7 @@ export default function FinanceView() {
   const [to, setTo] = useState(rangeForPreset('month')[1]);
   const [expenseModal, setExpenseModal] = useState({ open: false, editing: null });
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { if (preset !== 'custom') { const [f, t] = rangeForPreset(preset); setFrom(f); setTo(t); } }, [preset]);
 
@@ -154,7 +156,18 @@ export default function FinanceView() {
       <ConfirmDialog
         open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Hapus Pengeluaran?"
         message="Catatan pengeluaran ini akan dihapus permanen."
-        onConfirm={() => { deleteExpense(confirmDelete.id); setConfirmDelete(null); }}
+        onConfirm={async () => {
+          setDeleting(true);
+          try {
+            await deleteExpense(confirmDelete.id);
+            setConfirmDelete(null);
+          } catch (e) {
+            // error toast already shown centrally
+          } finally {
+            setDeleting(false);
+          }
+        }}
+        loading={deleting}
       />
     </div>
   );

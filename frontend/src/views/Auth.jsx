@@ -49,9 +49,7 @@ export function SetupView({ onComplete, loading }) {
               </Field>
               <div className="flex gap-2 mt-2">
                 <Btn variant="secondary" onClick={() => setStep(1)}>Kembali</Btn>
-                <Btn className="flex-1" disabled={!canNext || loading} onClick={() => onComplete({ storeName, address, adminName, pin })}>
-                  {loading ? 'Menyimpan...' : 'Mulai Pakai Aplikasi'}
-                </Btn>
+                <Btn className="flex-1" disabled={!canNext} loading={loading} loadingText="Menyimpan..." onClick={() => onComplete({ storeName, address, adminName, pin })}>Mulai Pakai Aplikasi</Btn>
               </div>
             </div>
           )}
@@ -99,7 +97,7 @@ export function LoginView({ settings, onLogin, verifyPin }) {
                 />
               </Field>
               {error && <p className="text-chili-600 text-xs mt-2 text-left">{error}</p>}
-              <Btn className="w-full mt-4" icon={Lock} disabled={checking || pin.length < 4} onClick={submit}>{checking ? 'Memeriksa...' : 'Masuk'}</Btn>
+              <Btn className="w-full mt-4" icon={Lock} disabled={pin.length < 4} loading={checking} loadingText="Memeriksa..." onClick={submit}>Masuk</Btn>
             </>
           ) : (
             <Btn className="w-full" icon={User} onClick={onLogin}>Masuk sebagai {settings.adminName}</Btn>

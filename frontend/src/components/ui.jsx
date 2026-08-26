@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { X, AlertTriangle, CircleCheck, Info } from 'lucide-react';
+import { X, AlertTriangle, CircleCheck, Info, Loader2 } from 'lucide-react';
 import { cx } from '../lib/helpers';
 
 export const inputCls =
@@ -32,10 +32,13 @@ const BTN_SIZES = {
   lg: 'px-5 py-3.5 text-base gap-2.5',
 };
 
-export function Btn({ children, variant = 'primary', size = 'md', className = '', icon: Icon, ...props }) {
+export function Btn({ children, variant = 'primary', size = 'md', className = '', icon: Icon, loading = false, loadingText, disabled, ...props }) {
+  const isDisabled = disabled || loading;
+  const ShownIcon = loading ? Loader2 : Icon;
   return (
     <button
       type="button"
+      disabled={isDisabled}
       className={cx(
         'inline-flex items-center justify-center rounded-xl font-semibold transition-all active:scale-[0.97]',
         'disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none',
@@ -45,8 +48,8 @@ export function Btn({ children, variant = 'primary', size = 'md', className = ''
       )}
       {...props}
     >
-      {Icon && <Icon size={size === 'sm' ? 14 : 16} strokeWidth={2.4} />}
-      {children}
+      {ShownIcon && <ShownIcon size={size === 'sm' ? 14 : 16} strokeWidth={2.4} className={loading ? 'animate-spin' : ''} />}
+      {loading && loadingText ? loadingText : children}
     </button>
   );
 }
@@ -148,16 +151,16 @@ export function Modal({ open, onClose, title, children, footer, maxW = 'max-w-md
   );
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, message, tone = 'danger', confirmLabel = 'Ya, lanjutkan' }) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, message, tone = 'danger', confirmLabel = 'Ya, lanjutkan', loading = false }) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={loading ? () => {} : onClose}
       title={title}
       footer={
         <>
-          <Btn variant="secondary" onClick={onClose}>Batal</Btn>
-          <Btn variant={tone} onClick={onConfirm}>{confirmLabel}</Btn>
+          <Btn variant="secondary" onClick={onClose} disabled={loading}>Batal</Btn>
+          <Btn variant={tone} onClick={onConfirm} loading={loading} loadingText="Memproses...">{confirmLabel}</Btn>
         </>
       }
     >

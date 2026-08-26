@@ -54,6 +54,7 @@ export default function HistoryView() {
   const [detail, setDetail] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [confirmVoid, setConfirmVoid] = useState(null);
+  const [voiding, setVoiding] = useState(false);
 
   useEffect(() => {
     if (preset !== 'custom') { const [f, t] = rangeForPreset(preset); setFrom(f); setTo(t); }
@@ -119,7 +120,18 @@ export default function HistoryView() {
       <ConfirmDialog
         open={!!confirmVoid} onClose={() => setConfirmVoid(null)} title="Void Transaksi?"
         message={`Transaksi ${confirmVoid?.transactionNumber} akan dibatalkan dan stok terkait akan dikembalikan. Riwayat tetap tersimpan.`}
-        onConfirm={() => { voidTransaction(confirmVoid.id); setConfirmVoid(null); setDetail(null); }}
+        onConfirm={async () => {
+          setVoiding(true);
+          try {
+            await voidTransaction(confirmVoid.id);
+            setConfirmVoid(null); setDetail(null);
+          } catch (e) {
+            // error toast already shown centrally
+          } finally {
+            setVoiding(false);
+          }
+        }}
+        loading={voiding}
       />
     </div>
   );

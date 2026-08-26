@@ -8,6 +8,7 @@ export default function ExpView() {
   const { products, batches, settings, updateSettings, writeOffBatch } = useApp();
   const [filter, setFilter] = useState('all');
   const [confirmWriteOff, setConfirmWriteOff] = useState(null);
+  const [writingOff, setWritingOff] = useState(false);
 
   const rows = batches
     .filter((b) => b.remainingQuantity > 0)
@@ -34,6 +35,18 @@ export default function ExpView() {
   ];
 
   const labelMap = { expired: 'Sudah EXP', today: 'Hari ini EXP', soon: 'Mendekati EXP', aman: 'Aman' };
+
+  async function confirmWriteOffNow() {
+    setWritingOff(true);
+    try {
+      await writeOffBatch(confirmWriteOff.id);
+      setConfirmWriteOff(null);
+    } catch (e) {
+      // error toast already shown centrally; keep dialog open to retry/cancel
+    } finally {
+      setWritingOff(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -91,7 +104,7 @@ export default function ExpView() {
       <ConfirmDialog
         open={!!confirmWriteOff} onClose={() => setConfirmWriteOff(null)} title="Buang Stok Kedaluwarsa?"
         message={`${confirmWriteOff?.remainingQuantity} ${confirmWriteOff?.product?.unit} ${confirmWriteOff?.product?.name} akan ditandai sebagai rusak/dibuang dan dikeluarkan dari stok.`}
-        onConfirm={() => { writeOffBatch(confirmWriteOff.id); setConfirmWriteOff(null); }}
+        onConfirm={confirmWriteOffNow} loading={writingOff}
       />
     </div>
   );

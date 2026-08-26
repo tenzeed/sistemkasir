@@ -8,11 +8,13 @@ export default function SettingsView() {
   const [form, setForm] = useState({ ...settings, pin: '' });
   const [saving, setSaving] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   useEffect(() => setForm({ ...settings, pin: '' }), [settings]);
 
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function save() {
+    if (saving) return;
     setSaving(true);
     try {
       const payload = { storeName: form.storeName, address: form.address, phone: form.phone, adminName: form.adminName, receiptWidth: form.receiptWidth };
@@ -55,7 +57,7 @@ export default function SettingsView() {
         </div>
       </Card>
 
-      <Btn onClick={save} icon={Save} className="w-full sm:w-auto" disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan Pengaturan'}</Btn>
+      <Btn onClick={save} icon={Save} className="w-full sm:w-auto" loading={saving} loadingText="Menyimpan...">Simpan Pengaturan</Btn>
 
       <Card className="border-chili-100">
         <p className="font-bold text-chili-600 mb-2 flex items-center gap-2"><AlertTriangle size={16} /> Zona Berbahaya</p>
@@ -66,7 +68,18 @@ export default function SettingsView() {
       <ConfirmDialog
         open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset Semua Data?"
         message="Tindakan ini akan menghapus semua data yang tersimpan di spreadsheet dan tidak dapat dibatalkan. Lanjutkan?"
-        onConfirm={() => { resetAllData(); setConfirmReset(false); }}
+        onConfirm={async () => {
+          setResetting(true);
+          try {
+            await resetAllData();
+            setConfirmReset(false);
+          } catch (e) {
+            // error toast already shown centrally
+          } finally {
+            setResetting(false);
+          }
+        }}
+        loading={resetting}
       />
     </div>
   );

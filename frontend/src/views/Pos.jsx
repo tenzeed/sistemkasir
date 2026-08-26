@@ -17,14 +17,14 @@ export function PaymentModal({ open, onClose, total, onConfirm }) {
   const paidNum = Number(paid) || 0;
   const change = paidNum - total;
   const isCash = method === 'Tunai';
-  const canConfirm = !submitting && (!isCash || paidNum >= total);
+  const canConfirm = !isCash || paidNum >= total;
 
   const quickAmounts = Array.from(
     new Set([total, Math.ceil(total / 5000) * 5000, Math.ceil(total / 10000) * 10000 + 10000, Math.ceil(total / 50000) * 50000])
   ).filter((v) => v > 0).sort((a, b) => a - b).slice(0, 4);
 
   async function handleConfirm() {
-    if (!canConfirm) return;
+    if (!canConfirm || submitting) return;
     setSubmitting(true);
     try {
       await onConfirm({ paymentMethod: method, paidAmount: isCash ? paidNum : total });
@@ -42,10 +42,8 @@ export function PaymentModal({ open, onClose, total, onConfirm }) {
       open={open} onClose={onClose} title="Pembayaran" maxW="max-w-sm"
       footer={
         <>
-          <Btn variant="secondary" className="flex-1" onClick={onClose}>Batal</Btn>
-          <Btn className="flex-1" disabled={!canConfirm} onClick={handleConfirm} icon={Check}>
-            {submitting ? 'Memproses...' : 'Selesaikan'}
-          </Btn>
+          <Btn variant="secondary" className="flex-1" onClick={onClose} disabled={submitting}>Batal</Btn>
+          <Btn className="flex-1" disabled={!canConfirm} loading={submitting} loadingText="Memproses..." onClick={handleConfirm} icon={Check}>Selesaikan</Btn>
         </>
       }
     >

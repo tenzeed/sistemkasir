@@ -15,6 +15,7 @@ function RestockModal({ open, onClose, products }) {
   const product = products.find((p) => p.id === form.productId);
 
   async function submit() {
+    if (saving) return;
     if (!form.productId || !form.quantity || Number(form.quantity) <= 0 || form.purchasePrice === '') {
       pushToast('Lengkapi produk, jumlah, dan harga beli', 'error'); return;
     }
@@ -35,7 +36,7 @@ function RestockModal({ open, onClose, products }) {
   const total = (Number(form.quantity) || 0) * (Number(form.purchasePrice) || 0);
 
   return (
-    <Modal open={open} onClose={onClose} title="Stok Masuk / Restock" footer={<><Btn variant="secondary" onClick={onClose}>Batal</Btn><Btn onClick={submit} icon={PackageCheck} disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan Restock'}</Btn></>}>
+    <Modal open={open} onClose={onClose} title="Stok Masuk / Restock" footer={<><Btn variant="secondary" onClick={onClose} disabled={saving}>Batal</Btn><Btn onClick={submit} icon={PackageCheck} loading={saving} loadingText="Menyimpan...">Simpan Restock</Btn></>}>
       <div className="space-y-4">
         <Field label="Produk">
           <select value={form.productId} onChange={(e) => set('productId', e.target.value)} className={inputCls}>
@@ -71,6 +72,7 @@ function AdjustModal({ open, onClose, batch, product }) {
   if (!batch) return null;
 
   async function submit() {
+    if (saving) return;
     const d = Number(delta);
     if (!d) { pushToast('Masukkan jumlah koreksi (boleh negatif)', 'error'); return; }
     if (batch.remainingQuantity + d < 0) { pushToast('Stok tidak boleh menjadi negatif', 'error'); return; }
@@ -86,7 +88,7 @@ function AdjustModal({ open, onClose, batch, product }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Koreksi Stok" footer={<><Btn variant="secondary" onClick={onClose}>Batal</Btn><Btn onClick={submit} disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan Koreksi'}</Btn></>}>
+    <Modal open={open} onClose={onClose} title="Koreksi Stok" footer={<><Btn variant="secondary" onClick={onClose} disabled={saving}>Batal</Btn><Btn onClick={submit} loading={saving} loadingText="Menyimpan...">Simpan Koreksi</Btn></>}>
       <div className="space-y-4">
         <div className="bg-ink-50 rounded-xl px-4 py-3 text-sm">
           <p className="font-semibold text-ink-700">{product?.name}</p>
@@ -161,13 +163,21 @@ export default function StockView() {
                         ) : (
                           <div className="space-y-1.5 pt-1">
                             {productBatches.map((b) => (
-                              <div key={b.id} className="flex items-center justify-between bg-white rounded-xl px-3.5 py-2.5 border border-ink-100">
-                                <div className="flex items-center gap-3">
-                                  <span className="font-mono text-xs text-ink-400">#{b.id.slice(-6)}</span>
-                                  <span className="text-sm font-semibold text-ink-700">{b.remainingQuantity} {p.unit}</span>
-                                  <Badge tone={batchStatusTone(b.expStatus)}>{b.expiryDate ? `EXP ${fmtDate(b.expiryDate)}` : 'Tanpa EXP'}</Badge>
+                              <div key={b.id} className="flex items-center justify-between gap-3 bg-white rounded-xl px-3.5 py-2.5 border border-ink-100">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-xs text-ink-400">#{b.id.slice(-6)}</span>
+                                    <Badge tone={batchStatusTone(b.expStatus)}>{b.expiryDate ? `EXP ${fmtDate(b.expiryDate)}` : 'Tanpa EXP'}</Badge>
+                                  </div>
+                                  <p className="text-sm mt-1">
+                                    <span className="font-semibold text-ink-700">{b.remainingQuantity} {p.unit}</span>
+                                    <span className="text-ink-400"> · beli </span>
+                                    <span className="font-mono font-semibold text-ink-700">{rupiah(b.purchasePrice)}</span>
+                                    <span className="text-ink-400">/{p.unit}</span>
+                                  </p>
+                                  <p className="text-xs text-ink-400 mt-0.5">Dibeli {fmtDate(b.purchaseDate)}</p>
                                 </div>
-                                <button type="button" onClick={() => setAdjustTarget(b)} className="text-xs font-bold text-warung-700 hover:underline">Koreksi</button>
+                                <button type="button" onClick={() => setAdjustTarget(b)} className="text-xs font-bold text-warung-700 hover:underline flex-shrink-0">Koreksi</button>
                               </div>
                             ))}
                           </div>
@@ -190,12 +200,17 @@ export default function StockView() {
             <div className="divide-y divide-ink-50">
               {sortedMovements.map((m) => {
                 const p = products.find((pr) => pr.id === m.productId);
+                const relatedBatch = m.type === 'RESTOCK' ? batches.find((b) => b.id === m.batchId) : null;
                 return (
                   <div key={m.id} className="p-4 flex items-center gap-3">
                     <Badge tone={movementTypeTone[m.type] || 'ink'}>{movementTypeLabel[m.type] || m.type}</Badge>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink-700 truncate">{p?.name || 'Produk dihapus'}</p>
-                      <p className="text-xs text-ink-400">{fmtDateTime(m.createdAt)}{m.note ? ` · ${m.note}` : ''}</p>
+                      <p className="text-xs text-ink-400">
+                        {fmtDateTime(m.createdAt)}
+                        {relatedBatch ? ` · beli ${rupiah(relatedBatch.purchasePrice)}/${p?.unit || ''}` : ''}
+                        {m.note ? ` · ${m.note}` : ''}
+                      </p>
                     </div>
                     <span className={`font-mono font-bold text-sm flex-shrink-0 ${m.quantity >= 0 ? 'text-warung-600' : 'text-chili-500'}`}>{m.quantity >= 0 ? '+' : ''}{m.quantity}</span>
                   </div>

@@ -27,6 +27,7 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState('');
   const [data, setData] = useState(EMPTY_DATA);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [settingUp, setSettingUp] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [moreOpen, setMoreOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -81,10 +82,18 @@ export default function App() {
   }, [pushToast]);
 
   async function completeSetup({ storeName, address, adminName, pin }) {
-    const d = await act(() => api.setupStore({ storeName, address, adminName, pin }));
-    applyData(d);
-    setLoggedIn(true);
-    setPhase('ready');
+    setSettingUp(true);
+    try {
+      const d = await act(() => api.setupStore({ storeName, address, adminName, pin }));
+      applyData(d);
+      setLoggedIn(true);
+      setPhase('ready');
+    } catch (e) {
+      // error toast already shown by `act`; keep the wizard open so the
+      // admin can retry instead of silently doing nothing.
+    } finally {
+      setSettingUp(false);
+    }
   }
 
   async function verifyPin(pin) {
@@ -162,7 +171,7 @@ export default function App() {
     );
   }
 
-  if (phase === 'setup') return <SetupView onComplete={completeSetup} />;
+  if (phase === 'setup') return <SetupView onComplete={completeSetup} loading={settingUp} />;
   if (phase === 'login' && !loggedIn) return <LoginView settings={data.settings} onLogin={onLoginSuccess} verifyPin={verifyPin} />;
 
   const ctxValue = { ...data, pushToast, goTo: setActiveView, ...actions };

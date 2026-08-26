@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Tag, Search, Pencil, Eye, EyeOff, Trash2, Save, Package } from 'lucide-react';
+import { Plus, Tag, Search, Pencil, Eye, EyeOff, Trash2, Save, Package, Loader2 } from 'lucide-react';
 import { Card, SectionHeader, Btn, Badge, Modal, ConfirmDialog, EmptyState, Field, inputCls } from '../components/ui.jsx';
 import { rupiah } from '../lib/helpers';
 import { useApp } from '../lib/context.jsx';
@@ -19,6 +19,7 @@ function ProductModal({ open, onClose, editing, categories }) {
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function submit() {
+    if (saving) return;
     if (!form.name.trim() || !form.unit.trim() || form.sellingPrice === '' || form.purchasePrice === '') {
       pushToast('Lengkapi nama, satuan, dan harga terlebih dahulu', 'error');
       return;
@@ -33,13 +34,15 @@ function ProductModal({ open, onClose, editing, categories }) {
       if (editing) await updateProduct(editing.id, payload);
       else await addProduct(payload);
       onClose();
+    } catch (e) {
+      // error toast already shown by the centralized action wrapper
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={editing ? 'Edit Produk' : 'Tambah Produk'} footer={<><Btn variant="secondary" onClick={onClose}>Batal</Btn><Btn onClick={submit} icon={Save} disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan'}</Btn></>}>
+    <Modal open={open} onClose={onClose} title={editing ? 'Edit Produk' : 'Tambah Produk'} footer={<><Btn variant="secondary" onClick={onClose} disabled={saving}>Batal</Btn><Btn onClick={submit} icon={Save} loading={saving} loadingText="Menyimpan...">Simpan</Btn></>}>
       <div className="space-y-4">
         <Field label="Nama Produk"><input autoFocus value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="mis. Indomie Goreng" className={inputCls} /></Field>
         <div className="grid grid-cols-2 gap-3">
@@ -64,27 +67,55 @@ function CategoryModal({ open, onClose, categories }) {
   const { addCategory, updateCategory, toggleCategoryStatus, pushToast } = useApp();
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   async function submit() {
+    if (saving) return; // belt-and-suspenders: ignore re-entrant calls too
     if (!name.trim()) { pushToast('Nama kategori tidak boleh kosong', 'error'); return; }
-    if (editingId) await updateCategory(editingId, name.trim());
-    else await addCategory(name.trim());
-    setName(''); setEditingId(null);
+    setSaving(true);
+    try {
+      if (editingId) await updateCategory(editingId, name.trim());
+      else await addCategory(name.trim());
+      setName(''); setEditingId(null);
+    } catch (e) {
+      // error toast already shown centrally
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggle(id) {
+    if (togglingId) return;
+    setTogglingId(id);
+    try {
+      await toggleCategoryStatus(id);
+    } finally {
+      setTogglingId(null);
+    }
   }
 
   return (
     <Modal open={open} onClose={onClose} title="Kelola Kategori" maxW="max-w-sm">
       <div className="flex gap-2 mb-4">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={editingId ? 'Ubah nama kategori' : 'Kategori baru'} className={inputCls} onKeyDown={(e) => e.key === 'Enter' && submit()} />
-        <Btn size="md" onClick={submit} icon={editingId ? Save : Plus} />
+        <input
+          value={name} onChange={(e) => setName(e.target.value)} disabled={saving}
+          placeholder={editingId ? 'Ubah nama kategori' : 'Kategori baru'} className={inputCls}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+        />
+        <Btn size="md" onClick={submit} icon={editingId ? Save : Plus} loading={saving} />
       </div>
       <div className="space-y-1.5">
         {categories.map((c) => (
           <div key={c.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-ink-100">
             <span className={c.status === 'active' ? 'text-sm font-medium text-ink-700' : 'text-sm font-medium text-ink-300 line-through'}>{c.name}</span>
             <div className="flex items-center gap-1">
-              <button type="button" onClick={() => { setEditingId(c.id); setName(c.name); }} className="w-7 h-7 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400"><Pencil size={14} /></button>
-              <button type="button" onClick={() => toggleCategoryStatus(c.id)} className="w-7 h-7 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400">{c.status === 'active' ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+              <button type="button" disabled={saving || !!togglingId} onClick={() => { setEditingId(c.id); setName(c.name); }} className="w-7 h-7 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400 disabled:opacity-40">
+                <Pencil size={14} />
+              </button>
+              <button type="button" disabled={saving || !!togglingId} onClick={() => handleToggle(c.id)} className="w-7 h-7 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400 disabled:opacity-40">
+                {togglingId === c.id ? <Loader2 size={14} className="animate-spin" /> : c.status === 'active' ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
             </div>
           </div>
         ))}
@@ -102,6 +133,8 @@ export default function ProductsView() {
   const [productModal, setProductModal] = useState({ open: false, editing: null });
   const [categoryModal, setCategoryModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   const filtered = products.filter((p) => {
     if (!showInactive && p.status !== 'active') return false;
@@ -117,6 +150,28 @@ export default function ProductsView() {
   function handleDelete(p) {
     if (hasHistory(p.id)) { pushToast('Produk memiliki riwayat transaksi, nonaktifkan saja', 'error'); return; }
     setConfirmDelete(p);
+  }
+
+  async function confirmDeleteNow() {
+    setDeleting(true);
+    try {
+      await deleteProduct(confirmDelete.id);
+      setConfirmDelete(null);
+    } catch (e) {
+      // error toast already shown centrally; keep dialog open so the admin can retry/cancel
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleToggle(id) {
+    if (togglingId) return;
+    setTogglingId(id);
+    try {
+      await toggleProductStatus(id);
+    } finally {
+      setTogglingId(null);
+    }
   }
 
   return (
@@ -174,9 +229,11 @@ export default function ProductsView() {
                     <p className="text-xs text-ink-400">Stok: {p.sellableStock}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button type="button" onClick={() => setProductModal({ open: true, editing: p })} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400"><Pencil size={15} /></button>
-                    <button type="button" onClick={() => toggleProductStatus(p.id)} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400">{p.status === 'active' ? <EyeOff size={15} /> : <Eye size={15} />}</button>
-                    <button type="button" onClick={() => handleDelete(p)} className="w-8 h-8 rounded-lg hover:bg-chili-50 flex items-center justify-center text-ink-400 hover:text-chili-500"><Trash2 size={15} /></button>
+                    <button type="button" disabled={togglingId === p.id} onClick={() => setProductModal({ open: true, editing: p })} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400 disabled:opacity-40"><Pencil size={15} /></button>
+                    <button type="button" disabled={!!togglingId} onClick={() => handleToggle(p.id)} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-400 disabled:opacity-40">
+                      {togglingId === p.id ? <Loader2 size={15} className="animate-spin" /> : p.status === 'active' ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                    <button type="button" disabled={!!togglingId} onClick={() => handleDelete(p)} className="w-8 h-8 rounded-lg hover:bg-chili-50 flex items-center justify-center text-ink-400 hover:text-chili-500 disabled:opacity-40"><Trash2 size={15} /></button>
                   </div>
                 </div>
               );
@@ -190,7 +247,7 @@ export default function ProductsView() {
       <ConfirmDialog
         open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Hapus Produk?"
         message={`"${confirmDelete?.name}" akan dihapus permanen karena belum memiliki riwayat transaksi. Lanjutkan?`}
-        onConfirm={() => { deleteProduct(confirmDelete.id); setConfirmDelete(null); }}
+        onConfirm={confirmDeleteNow} loading={deleting}
       />
     </div>
   );
