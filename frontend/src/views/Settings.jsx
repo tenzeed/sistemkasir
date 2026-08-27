@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Store, ShieldCheck, Save, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Store, ShieldCheck, Save, AlertTriangle, RefreshCw, Smartphone } from 'lucide-react';
 import { Card, SectionHeader, Btn, Field, ConfirmDialog, inputCls } from '../components/ui.jsx';
 import { useApp } from '../lib/context.jsx';
+import { useInstallPrompt } from '../lib/useInstallPrompt.js';
 
 export default function SettingsView() {
   const { settings, updateSettings, resetAllData } = useApp();
+  const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [form, setForm] = useState({ ...settings, pin: '' });
   const [saving, setSaving] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -40,6 +42,20 @@ export default function SettingsView() {
           <Field label="Nama Admin"><input value={form.adminName || ''} onChange={(e) => set('adminName', e.target.value)} className={inputCls} /></Field>
         </div>
       </Card>
+
+      {(canInstall || installed) && (
+        <Card>
+          <p className="font-bold text-ink-800 mb-2 flex items-center gap-2"><Smartphone size={16} className="text-warung-700" /> Aplikasi di Perangkat Ini</p>
+          {installed ? (
+            <p className="text-sm text-ink-500">Aplikasi ini sudah terpasang di perangkat Anda, bisa dibuka langsung dari layar utama.</p>
+          ) : (
+            <>
+              <p className="text-sm text-ink-500 mb-3">Pasang sebagai aplikasi supaya bisa dibuka langsung dari layar utama, tanpa buka browser.</p>
+              <Btn variant="secondary" size="sm" onClick={promptInstall}>Pasang Aplikasi</Btn>
+            </>
+          )}
+        </Card>
+      )}
 
       <Card>
         <p className="font-bold text-ink-800 mb-4 flex items-center gap-2"><ShieldCheck size={16} className="text-warung-700" /> Keamanan & Struk</p>

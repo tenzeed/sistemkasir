@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Store, Lock, User } from 'lucide-react';
 import { Btn, Field, inputCls } from '../components/ui.jsx';
+import { InstallChip } from '../components/InstallChip.jsx';
 
 export function SetupView({ onComplete, loading }) {
   const [storeName, setStoreName] = useState('');
@@ -20,6 +21,9 @@ export function SetupView({ onComplete, loading }) {
           </div>
           <h1 className="text-white text-xl font-extrabold">Selamat Datang</h1>
           <p className="text-warung-200 text-sm mt-1">Mari siapkan aplikasi warung Anda</p>
+          <div className="flex justify-center mt-4">
+            <InstallChip tone="dark" />
+          </div>
         </div>
         <div className="bg-white rounded-2xl shadow-pop p-6">
           <div className="flex items-center gap-1.5 mb-5">
@@ -85,6 +89,9 @@ export function LoginView({ settings, onLogin, verifyPin }) {
         </div>
         <h1 className="text-white text-xl font-extrabold">{settings.storeName}</h1>
         <p className="text-warung-200 text-sm mt-1">Selamat datang kembali, {settings.adminName}</p>
+        <div className="flex justify-center mt-4">
+          <InstallChip tone="dark" />
+        </div>
 
         <div className="bg-white rounded-2xl shadow-pop p-6 mt-6">
           {needsPin ? (
