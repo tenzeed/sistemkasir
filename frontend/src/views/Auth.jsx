@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Store, Lock, User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { Btn, Field, inputCls } from '../components/ui.jsx';
 import { InstallChip } from '../components/InstallChip.jsx';
+import { BrandMark } from '../components/BrandMark.jsx';
 
 export function SetupView({ onComplete, loading }) {
   const [storeName, setStoreName] = useState('');
@@ -17,7 +18,7 @@ export function SetupView({ onComplete, loading }) {
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
           <div className="w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center mx-auto mb-4">
-            <Store className="text-marigold-300" size={28} />
+            <BrandMark size={30} />
           </div>
           <h1 className="text-white text-xl font-extrabold">Selamat Datang</h1>
           <p className="text-warung-200 text-sm mt-1">Mari siapkan aplikasi warung Anda</p>
@@ -85,7 +86,7 @@ export function LoginView({ settings, onLogin, verifyPin }) {
     <div className="min-h-screen bg-warung-hero bg-grain flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
         <div className="w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center mx-auto mb-4">
-          <Store className="text-marigold-300" size={28} />
+          <BrandMark size={30} />
         </div>
         <h1 className="text-white text-xl font-extrabold">{settings.storeName}</h1>
         <p className="text-warung-200 text-sm mt-1">Selamat datang kembali, {settings.adminName}</p>

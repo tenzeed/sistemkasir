@@ -1,9 +1,10 @@
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, CalendarClock, History,
-  Wallet, BarChart3, Settings as SettingsIcon, Store, LogOut, Menu, MoreHorizontal,
+  Wallet, BarChart3, Settings as SettingsIcon, LogOut, Menu, MoreHorizontal,
 } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/constants';
 import { Modal } from './ui.jsx';
+import { BrandMark } from './BrandMark.jsx';
 import { cx } from '../lib/helpers';
 
 const ICONS = {
@@ -16,7 +17,7 @@ export function Sidebar({ active, onNav, onLogout, storeName, adminName, alertCo
     <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-warung-hero bg-grain text-white h-screen sticky top-0">
       <div className="px-5 py-5 flex items-center gap-3 border-b border-white/10">
         <div className="w-10 h-10 rounded-xl bg-white/10 ring-1 ring-white/15 flex items-center justify-center flex-shrink-0">
-          <Store size={20} className="text-marigold-300" />
+          <BrandMark size={22} />
         </div>
         <div className="min-w-0">
           <p className="font-bold text-sm truncate">{storeName}</p>

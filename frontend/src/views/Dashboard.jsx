@@ -96,7 +96,7 @@ export default function DashboardView() {
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#a6b5ac' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#a6b5ac' }} axisLine={false} tickLine={false} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}rb` : v)} width={40} />
               <Tooltip formatter={(v) => rupiah(v)} cursor={{ fill: '#f5f7f6' }} contentStyle={{ borderRadius: 12, border: '1px solid #e7ebe8', fontSize: 12 }} />
-              <Bar dataKey="total" fill="#0f6b4c" radius={[6, 6, 0, 0]} maxBarSize={36} />
+              <Bar dataKey="total" fill="#4338ca" radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
         </div>
