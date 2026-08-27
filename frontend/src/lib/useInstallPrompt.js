@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * Wraps the browser's `beforeinstallprompt` flow. Renders nothing on its
- * own — `canInstall` is only ever true when the browser has actually
- * confirmed the app is installable (right manifest, service worker,
- * HTTPS, not already installed). On browsers that never fire the event
- * (Safari/iOS, Firefox) `canInstall` just stays false forever, so callers
- * should hide their own install UI in that case rather than showing a
- * button that does nothing.
+ * Wraps the browser's `beforeinstallprompt` flow. The actual event is
+ * captured as early as possible by an inline script in index.html (see
+ * that file for why) and stashed on `window.__pwaInstallEvent`; this hook
+ * just reads that global and re-renders whenever it changes, so it works
+ * correctly no matter which screen happens to be mounted when the browser
+ * decides the app is installable.
+ *
+ * On browsers that never fire the event (Safari/iOS, Firefox) `canInstall`
+ * just stays false forever, so callers should hide their own install UI
+ * in that case rather than showing a button that does nothing.
  */
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [ready, setReady] = useState(() => typeof window !== 'undefined' && !!window.__pwaInstallEvent);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
@@ -18,30 +21,30 @@ export function useInstallPrompt() {
       window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (isStandalone) setInstalled(true);
 
-    function onBeforeInstallPrompt(e) {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    }
-    function onAppInstalled() {
-      setInstalled(true);
-      setDeferredPrompt(null);
-    }
+    // In case the event arrived between module init and this effect running.
+    if (window.__pwaInstallEvent) setReady(true);
 
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-    window.addEventListener('appinstalled', onAppInstalled);
+    function onReady() { setReady(true); }
+    function onDone() { setInstalled(true); setReady(false); }
+
+    window.addEventListener('pwa-install-ready', onReady);
+    window.addEventListener('pwa-install-done', onDone);
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', onAppInstalled);
+      window.removeEventListener('pwa-install-ready', onReady);
+      window.removeEventListener('pwa-install-done', onDone);
     };
   }, []);
 
   const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) return false;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
+    const evt = window.__pwaInstallEvent;
+    if (!evt) return false;
+    evt.prompt();
+    const { outcome } = await evt.userChoice;
+    window.__pwaInstallEvent = null;
+    setReady(false);
+    if (outcome === 'accepted') setInstalled(true);
     return outcome === 'accepted';
-  }, [deferredPrompt]);
+  }, []);
 
-  return { canInstall: !!deferredPrompt && !installed, installed, promptInstall };
+  return { canInstall: ready && !installed, installed, promptInstall };
 }

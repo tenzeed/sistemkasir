@@ -2,6 +2,31 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+
+    <!--
+      Capture the browser's install signal IMMEDIATELY, before anything
+      else on the page loads. If we wait until React mounts to start
+      listening, the browser may have already fired this event and shown
+      its own default install banner in the meantime — which is exactly
+      the "looks like an ad, then disappears, never comes back" behavior
+      this script exists to prevent. Storing it on `window` means any
+      component that mounts later (Setup, PIN login, Settings) can still
+      pick it up, no matter which screen happened to be showing when it
+      actually fired.
+    -->
+    <script>
+      window.__pwaInstallEvent = null;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__pwaInstallEvent = e;
+        window.dispatchEvent(new CustomEvent('pwa-install-ready'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__pwaInstallEvent = null;
+        window.dispatchEvent(new CustomEvent('pwa-install-done'));
+      });
+    </script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0f6b4c" />
     <title>Warung Manager</title>
