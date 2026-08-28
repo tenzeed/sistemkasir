@@ -1,20 +1,22 @@
-# Sumber Ikon Aplikasi
+# Ikon Aplikasi
 
-`icon-master.svg` adalah sumber desain ikon PWA (toko/warung dengan tenda
-garis-garis, di atas gradasi hijau khas aplikasi ini).
+Ikon aplikasi saat ini adalah **logo yang diunggah sendiri oleh pemilik toko**
+(bukan lagi `icon-master.svg` di folder ini). File aslinya diproses jadi:
 
-Kalau suatu saat ingin mengganti dengan logo warung Anda sendiri, edit file
-ini lalu jalankan (butuh `librsvg2-bin`: `apt-get install librsvg2-bin` di
-Linux, atau tools serupa di macOS/Windows):
+- `frontend/public/icon-512.png` (512×512)
+- `frontend/public/icon-192.png` (192×192)
+- `frontend/public/apple-touch-icon.png` (180×180, latar transparan diratakan ke putih untuk iOS)
+- `frontend/public/favicon-32.png` dan `favicon-16.png`
 
-```bash
-rsvg-convert -w 512 -h 512 icon-master.svg -o ../frontend/public/icon-512.png
-rsvg-convert -w 192 -h 192 icon-master.svg -o ../frontend/public/icon-192.png
-rsvg-convert -w 180 -h 180 icon-master.svg -o ../frontend/public/apple-touch-icon.png
-rsvg-convert -w 32  -h 32  icon-master.svg -o ../frontend/public/favicon-32.png
-rsvg-convert -w 16  -h 16  icon-master.svg -o ../frontend/public/favicon-16.png
-```
+`icon-master.svg` di folder ini adalah desain **bawaan/lama** (toko indigo
+bergaya flat) — disimpan sebagai cadangan kalau suatu saat ingin kembali ke
+ikon default, atau sebagai referensi ukuran/safe-zone kalau membuat ikon
+baru lagi nanti.
 
-Catatan desain: jaga elemen penting tetap berada dalam lingkaran 80% di
-tengah kanvas (safe zone), karena ikon "maskable" akan dipotong ke berbagai
-bentuk (lingkaran, persegi rounded, dsb) oleh masing-masing perangkat.
+Catatan: karena logo custom ini adalah ilustrasi detail (bukan bentuk
+sederhana), ikon ini didaftarkan dengan `purpose: "any"` saja di
+`manifest.webmanifest` (bukan `"maskable"`). Ikon "maskable" dipotong paksa
+oleh Android jadi berbagai bentuk (lingkaran, dsb.) berdasarkan area aman di
+tengah — untuk ilustrasi serapat ini, itu berisiko memotong detail penting
+(keranjang, mesin kasir). Kalau nanti ingin versi maskable yang proper,
+perlu dibuat versi ikon dengan padding ekstra di sekelilingnya.
