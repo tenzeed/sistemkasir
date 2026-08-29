@@ -54,3 +54,22 @@
   .print-area { position: absolute; top: 0; left: 0; width: 100%; }
   .no-print { display: none !important; }
 }
+
+/* Feels more like a native app, less like "a website": no accidental text
+   selection / copy popup on tap-and-hold, and no gray tap-highlight flash.
+   Actual form fields are explicitly excluded below so typing, selecting,
+   and pasting into them still works completely normally. */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select, [contenteditable='true'] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
