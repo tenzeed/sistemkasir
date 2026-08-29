@@ -101,6 +101,15 @@ export function ReceiptModal({ open, onClose, transaction }) {
         </>
       }
     >
+      {/* Tells the print system the page itself is receipt-roll width, not
+          Letter/A4 — helps once an actual thermal-printer print service is
+          selected. On a generic/PDF printer with no thermal driver, the
+          browser may still fall back to its own default paper size. */}
+      <style>{`
+        @media print {
+          @page { size: ${settings.receiptWidth === '80' ? '80mm' : '58mm'} auto; margin: 0; }
+        }
+      `}</style>
       <div ref={captureRef} className="print-area bg-ink-50 -m-5 sm:m-0 p-6 rounded-xl">
         <ReceiptContent transaction={transaction} settings={settings} />
       </div>
