@@ -5,6 +5,18 @@ import { Card, SectionHeader, StatCard, Tabs, EmptyState, ProgressBar } from '..
 import { rupiah, fmtDate, todayStr, addDaysStr, rangeForPreset, buildHourlySeries, buildDailySeries, topProductsInRange } from '../lib/helpers';
 import { useApp } from '../lib/context.jsx';
 
+export function formatChartTick(v) {
+  if (v >= 1000000) {
+    const jt = v / 1000000;
+    return `${Number.isInteger(jt) ? jt : jt.toFixed(1)}jt`;
+  }
+  if (v >= 1000) {
+    const rb = v / 1000;
+    return `${Number.isInteger(rb) ? rb : rb.toFixed(1)}rb`;
+  }
+  return String(v);
+}
+
 export default function DashboardView() {
   const { products, batches, transactions, expenses, settings, goTo } = useApp();
   const [chartPeriod, setChartPeriod] = useState('week');
@@ -92,10 +104,10 @@ export default function DashboardView() {
         <div className="h-64 px-2 pb-4 pt-4">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eef1ee" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#a6b5ac' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#a6b5ac' }} axisLine={false} tickLine={false} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}rb` : v)} width={40} />
-              <Tooltip formatter={(v) => rupiah(v)} cursor={{ fill: '#f5f7f6' }} contentStyle={{ borderRadius: 12, border: '1px solid #e7ebe8', fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={formatChartTick} width={46} />
+              <Tooltip formatter={(v) => rupiah(v)} cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
               <Bar dataKey="total" fill="#4338ca" radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
