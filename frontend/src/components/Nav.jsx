@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, Package, Boxes, CalendarClock, History,
-  Wallet, BarChart3, Settings as SettingsIcon, LogOut, Menu, MoreHorizontal,
+  Wallet, BarChart3, Settings as SettingsIcon, LogOut, MoreHorizontal,
 } from 'lucide-react';
 import { NAV_ITEMS } from '../lib/constants';
 import { Modal } from './ui.jsx';
@@ -57,13 +57,10 @@ export function Sidebar({ active, onNav, onLogout, storeName, adminName, alertCo
   );
 }
 
-export function TopBar({ title, onMenu }) {
+export function TopBar({ title }) {
   return (
-    <div className="lg:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-ink-100 px-4 py-3.5 flex items-center justify-between">
+    <div className="lg:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-ink-100 px-4 py-3.5">
       <h1 className="font-bold text-ink-900">{title}</h1>
-      <button type="button" onClick={onMenu} className="w-9 h-9 rounded-full hover:bg-ink-100 flex items-center justify-center text-ink-500 active:scale-95 transition-transform">
-        <Menu size={20} />
-      </button>
     </div>
   );
 }

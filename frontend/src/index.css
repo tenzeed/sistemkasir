@@ -8,6 +8,11 @@
   html {
     font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    /* Belt-and-suspenders for the viewport meta tag: newer iOS Safari
+       versions ignore `user-scalable=no`, but still respect touch-action,
+       so this blocks pinch-zoom gestures at the CSS level too. Normal
+       scrolling (pan-x/pan-y) still works fine. */
+    touch-action: pan-x pan-y;
   }
   body {
     @apply bg-ink-50 text-ink-900;

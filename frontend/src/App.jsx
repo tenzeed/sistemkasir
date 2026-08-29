@@ -20,6 +20,24 @@ function uid(prefix = '') {
   return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+// Persisted login flag so a page refresh doesn't force the cashier to log
+// back in every time. This is a convenience flag, not a security boundary
+// (see backend/SETUP.md) — it survives browser restarts and only clears on
+// an explicit "Keluar" (logout).
+const SESSION_KEY = 'warungku:session';
+function getSession() {
+  try { return localStorage.getItem(SESSION_KEY) === 'active'; } catch { return false; }
+}
+function setSession(active) {
+  try {
+    if (active) localStorage.setItem(SESSION_KEY, 'active');
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // Storage unavailable (e.g. strict private browsing) — non-fatal, the
+    // person will just be asked to log in again after a refresh.
+  }
+}
+
 const EMPTY_DATA = { settings: null, categories: [], products: [], batches: [], movements: [], transactions: [], expenses: [] };
 
 export default function App() {
@@ -56,7 +74,14 @@ export default function App() {
     try {
       const d = await api.bootstrap();
       applyData(d);
-      setPhase(d.settings ? 'login' : 'setup');
+      if (!d.settings) {
+        setPhase('setup');
+      } else if (getSession()) {
+        setLoggedIn(true);
+        setPhase('ready');
+      } else {
+        setPhase('login');
+      }
     } catch (e) {
       setErrorMsg(e.message || 'Gagal terhubung ke server');
       setPhase('error');
@@ -86,6 +111,7 @@ export default function App() {
     try {
       const d = await act(() => api.setupStore({ storeName, address, adminName, pin }));
       applyData(d);
+      setSession(true);
       setLoggedIn(true);
       setPhase('ready');
     } catch (e) {
@@ -106,8 +132,8 @@ export default function App() {
     }
   }
 
-  function onLoginSuccess() { setLoggedIn(true); setPhase('ready'); }
-  function onLogout() { setLoggedIn(false); setPhase('login'); setMoreOpen(false); }
+  function onLoginSuccess() { setSession(true); setLoggedIn(true); setPhase('ready'); }
+  function onLogout() { setSession(false); setLoggedIn(false); setPhase('login'); setMoreOpen(false); }
 
   const actions = {
     addCategory: (name) => act(() => api.addCategory({ name }), 'Kategori ditambahkan'),
@@ -182,7 +208,7 @@ export default function App() {
       <div className="min-h-screen bg-ink-50 flex">
         <Sidebar active={activeView} onNav={setActiveView} onLogout={onLogout} storeName={data.settings.storeName} adminName={data.settings.adminName} alertCount={alertCount} />
         <div className="flex-1 min-w-0">
-          <TopBar title={currentLabel} onMenu={() => setMoreOpen(true)} />
+          <TopBar title={currentLabel} />
           <main className="p-4 lg:p-6 max-w-6xl mx-auto pb-24 lg:pb-6">
             {activeView === 'dashboard' && <DashboardView />}
             {activeView === 'pos' && <PosView />}

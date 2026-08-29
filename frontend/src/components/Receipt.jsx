@@ -1,4 +1,6 @@
-import { Printer } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Printer, ImageDown } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { Modal, Btn } from './ui.jsx';
 import { rupiah, fmtDateTime } from '../lib/helpers';
 import { useApp } from '../lib/context.jsx';
@@ -39,19 +41,67 @@ export function ReceiptContent({ transaction, settings }) {
 }
 
 export function ReceiptModal({ open, onClose, transaction }) {
-  const { settings } = useApp();
+  const { settings, pushToast } = useApp();
+  const captureRef = useRef(null);
+  const [saving, setSaving] = useState(false);
+
   if (!transaction) return null;
+
+  async function saveAsImage() {
+    if (saving || !captureRef.current) return;
+    setSaving(true);
+    try {
+      const canvas = await html2canvas(captureRef.current, {
+        backgroundColor: '#f5f7f6',
+        scale: 2, // sharp enough to stay readable when shared/zoomed in WhatsApp
+        useCORS: true,
+      });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('no-blob');
+
+      const fileName = `struk-${transaction.transactionNumber}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      // On phones this opens the native share sheet directly — WhatsApp
+      // shows up there automatically if it's installed, no extra steps.
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Struk Transaksi', text: `Struk ${transaction.transactionNumber}` });
+          return;
+        } catch (shareErr) {
+          if (shareErr && shareErr.name === 'AbortError') return; // person cancelled the share sheet — not an error
+          // Any other share failure: fall through to a plain download instead.
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      pushToast('Gambar struk tersimpan, bisa dibagikan lewat WhatsApp dari galeri/unduhan');
+    } catch (e) {
+      pushToast('Gagal menyimpan gambar struk', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <Modal
       open={open} onClose={onClose} title="Struk Transaksi" maxW="max-w-sm"
       footer={
         <>
-          <Btn variant="secondary" className="flex-1" onClick={onClose}>Tutup</Btn>
-          <Btn className="flex-1" icon={Printer} onClick={() => window.print()}>Cetak</Btn>
+          <Btn variant="secondary" className="flex-1" onClick={onClose} disabled={saving}>Tutup</Btn>
+          <Btn variant="secondary" className="flex-1" icon={ImageDown} loading={saving} loadingText="Memproses..." onClick={saveAsImage}>Simpan</Btn>
+          <Btn className="flex-1" icon={Printer} onClick={() => window.print()} disabled={saving}>Cetak</Btn>
         </>
       }
     >
-      <div className="print-area bg-ink-50 -m-5 sm:m-0 p-6 rounded-xl">
+      <div ref={captureRef} className="print-area bg-ink-50 -m-5 sm:m-0 p-6 rounded-xl">
         <ReceiptContent transaction={transaction} settings={settings} />
       </div>
     </Modal>

@@ -28,6 +28,7 @@ const SAMPLE_PRODUCT = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear(); // isolate the "stay logged in after refresh" flag between tests
 });
 
 describe('Alur setup toko pertama kali', () => {
@@ -114,5 +115,40 @@ describe('Navigasi utama setelah login', () => {
 
     expect(await screen.findByText('Indomie Goreng')).toBeInTheDocument();
     expect(screen.getByText('Rp3.000')).toBeInTheDocument();
+  });
+});
+
+describe('Sesi login bertahan setelah refresh', () => {
+  const SETTINGS = { storeName: 'Warung Berkah', adminName: 'Sari', hasPin: false, expWarningDays: 30, receiptWidth: '58' };
+
+  it('tidak minta login lagi kalau sesi tersimpan dari kunjungan sebelumnya', async () => {
+    localStorage.setItem('warungku:session', 'active');
+    api.bootstrap.mockResolvedValue({ settings: SETTINGS, ...EMPTY_TABLES });
+
+    render(<App />);
+    // Langsung ke dashboard, TANPA perlu klik "Masuk sebagai Sari" dulu.
+    expect(await screen.findByText(/Halo, Sari/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /masuk sebagai sari/i })).not.toBeInTheDocument();
+  });
+
+  it('tetap minta login kalau belum pernah login sebelumnya (tidak ada sesi tersimpan)', async () => {
+    api.bootstrap.mockResolvedValue({ settings: SETTINGS, ...EMPTY_TABLES });
+    render(<App />);
+    expect(await screen.findByRole('button', { name: /masuk sebagai sari/i })).toBeInTheDocument();
+  });
+
+  it('menghapus sesi tersimpan saat logout, sehingga refresh berikutnya minta login lagi', async () => {
+    const user = userEvent.setup();
+    api.bootstrap.mockResolvedValue({ settings: SETTINGS, ...EMPTY_TABLES });
+
+    render(<App />);
+    await user.click(await screen.findByRole('button', { name: /masuk sebagai sari/i }));
+    expect(await screen.findByText(/Halo, Sari/)).toBeInTheDocument();
+    expect(localStorage.getItem('warungku:session')).toBe('active');
+
+    // Logout lewat menu sidebar (desktop) — tombol "Keluar".
+    await user.click(screen.getAllByRole('button', { name: /keluar/i })[0]);
+    expect(localStorage.getItem('warungku:session')).not.toBe('active');
+    expect(await screen.findByRole('button', { name: /masuk sebagai sari/i })).toBeInTheDocument();
   });
 });
